@@ -26,16 +26,33 @@ import openpyxl.utils.dataframe as pxl
 
 
 if __name__ == '__main__':
-    M = MarsReveal()
+    M = MarsReveal()    # Should be at the top anyways
 
-    file = 'project/subsystems_design/AOCS/Sub_Output.xlsx'
-    EPS_params = M.read_excel(file, sheet_name='EPS')
+    # Subsystem Excel filepath, relative to project root.
+    file_in = 'project/subsystems_design/AOCS/Sub_Output.xlsx'
+
+    #### Read all inputs ------------
+    in_params = M.read_excel(file_in)
+
+    #### Access values --------------
+    # params_in['sheetname']['variable name']['column']
+    print(in_params['AOCS']['test 1']['value'])
 
 
-    out_params = M.read_excel(file, sheet_name='AOCS')
 
-    out_params['test 1']['value'] = 'lol'
 
-    M.save_excel(out_params, 'project/subsystems_design/AOCS/Sub_Output - Copy.xlsx', 'AOCS')
+    #### Saving output parameters -------------------
+
+    # Initialize existing sheet, ensures correct dictionary structure
+    out_params = M.read_excel(file_in, sheet_name='AOCS')
+
+    # Modify values to the new calculated outputs
+    out_params['test 1']['value'] = 'new output 1'
+
+
+
+    # Save Values
+    file_out =  'project/subsystems_design/AOCS/Sub_Output - Copy.xlsx' # Likely same as above
+    M.save_sheet(out_params, file_out, 'AOCS')
 
 
