@@ -14,35 +14,13 @@ import sys
 sys.path.append(os.path.join(os.path.abspath(os.curdir).split('DSE-Mars-Reveal', 1)[0], 'DSE-Mars-Reveal'))
 
 
-from definitions import MarsReveal
+from definitions import MarsReveal, ROOT_DIR
 from LuigiPyTools import LatexPandas as LP
 import numpy as np
 import pandas as pd
-
-
-
-
-# def excel_io_dict(filename, **kwargs):
-#     '''Loads parameters from excel file to dictionary
-#
-#     Args:
-#         filename: str
-#             Path to Excel file
-#         **kwargs: 'sheet_name' or 'columns'
-#             To specify specific sheet or columns to load
-#             - 'sheet_name'='AOCS' (default)
-#             - 'columns' = '['Output name', 'Output Value', 'Units']' (default)
-#
-#     Returns:
-#         Dictionary of parameters
-#     '''
-#     sheet = kwargs.pop('sheet_name', 'AOCS')
-#     cols = kwargs.pop('columns', ['Output name', 'Output Value', 'Units'])
-#
-#     df = pd.read_excel(filename, sheet_name=sheet, usecols=cols)
-#     df.set_index('Output name', inplace=True)
-#     df.rename(columns={'Output name': 'name', 'Output Value': 'value', 'Units' : 'units'}, inplace=True)
-#     return df.to_dict('index')
+from openpyxl import load_workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
+import openpyxl.utils.dataframe as pxl
 
 
 
@@ -50,7 +28,14 @@ import pandas as pd
 if __name__ == '__main__':
     M = MarsReveal()
 
-    file = 'Sub_Output.xlsx'
-    params = M.excel_io_dict(file, sheet_name='AOCS')
-    print(params['test 2']['value'])
+    file = 'project/subsystems_design/AOCS/Sub_Output.xlsx'
+    EPS_params = M.read_excel(file, sheet_name='EPS')
+
+
+    out_params = M.read_excel(file, sheet_name='AOCS')
+
+    out_params['test 1']['value'] = 'lol'
+
+    M.save_excel(out_params, 'project/subsystems_design/AOCS/Sub_Output - Copy.xlsx', 'AOCS')
+
 
