@@ -51,6 +51,6 @@ if __name__ == '__main__':
     M = MarsReveal()
 
     file = 'Sub_Output.xlsx'
-    params = M.excel_io_dict(file, sheet_name='EPS')
+    params = M.excel_io_dict(file, sheet_name='AOCS')
     print(params['test 2']['value'])
 
