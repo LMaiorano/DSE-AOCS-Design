@@ -53,6 +53,6 @@ if __name__ == '__main__':
 
     # Save Values
     file_out =  'project/subsystems_design/AOCS/Sub_Output - Copy.xlsx' # Likely same as above
-    M.save_sheet(out_params, file_out, 'AOCS')
+    M.save_excel(out_params, file_out, 'AOCS')
 
 
