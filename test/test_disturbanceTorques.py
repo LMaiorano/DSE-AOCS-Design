@@ -16,6 +16,15 @@ class TestDisturbanceTorques(TestCase):
     def setUp(self) -> None:
         test_params = 'project/subsystems_design/AOCS/test/ref_Sub_Output.xlsx'
         self.DT = DisturbanceTorques(test_params)
+        self.fireSat = {'mass': 215,
+                        'dims': (1.294, 1.82998, 1.294),
+                        'dipole': 0,
+                        'cg': 0,
+                        'c_pres aero': 0,
+                        'c_pres solar': 0,
+                        'solar incidence': 0,
+                        'pt excursion': 1,
+                        'Cd': 2.2}
 
 
     def test_mag_torque(self):
@@ -47,9 +56,10 @@ class TestDisturbanceTorques(TestCase):
         Iz = 90
         Iy = 60
         theta = 1
+        moi = (90, 60, 90)
         mu_earth = 3.986e14
 
-        fs_out = self.DT.gg_torque(R, Iz, Iy, theta, mu=mu_earth)
+        fs_out = self.DT.gg_torque(R, moi, theta, mu=mu_earth)
         fs_ref = 1.8e-6
 
         self.assertEqual(round(fs_out, 7), fs_ref)

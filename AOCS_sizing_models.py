@@ -117,52 +117,14 @@ class DisturbanceTorques(MarsReveal):
         return Ta
 
 
-    def surface_area(self, radius, height):
-        return 2*radius*height
+    def surface_area(self, dims):
+        if len(dims)==2:
+            return 2*dims[0]*dims[1]
+        l = list(dims)
+        l.sort(reverse=True)
+        return l[0]*l[1]
 
 
-
-
-
-class HardwareSizing(MarsReveal):
-    def __init__(self, file_in):
-        super().__init__()
-        self.params = self.read_excel(file_in)
-
-
-    def slew_torque_RW(self, angle, seconds, veh_props):
-        '''Calculates torque for max-acceleration slew operations
-
-        Args:
-            angle: float
-                slew requirement [deg]
-            time: float
-                slew time requirement
-            veh_props: dict
-
-        Returns:
-
-        '''
-
-        moi = self.sc_moment_of_inertia(veh_props['mass'], veh_props['dims'], shape=veh_props['shape'])
-        I = max(moi)
-
-        slew_torq = 4 * np.radians(angle) * I / (seconds**2)
-        return slew_torq
-
-    def mom_storage_RW(self, TD, orb_period):
-        '''Integrates worst-case (cyclic) disturbance torque over a full orbit.
-        Necessary to estimate RW momentum storage
-
-        Args:
-            TD: float
-                worst-case disturbance torque
-            orb_period: float
-                orbital period [minutes]
-
-        Returns:
-
-        '''
 
 
 
@@ -173,6 +135,7 @@ class HardwareSizing(MarsReveal):
 if __name__ == '__main__':
     file_in = 'project/subsystems_design/AOCS/Sub_Output.xlsx'
     DT = DisturbanceTorques(file_in)
+    a = DT.surface_area((1.294, 1.82998, 1.294))
 
     # # Subsystem Excel filepath, relative to project root.
     # file_in = 'project/subsystems_design/AOCS/Sub_Output.xlsx'
