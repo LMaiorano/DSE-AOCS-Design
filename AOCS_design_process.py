@@ -9,6 +9,7 @@ author: lmaio
 """
 import numpy as np
 from project.subsystems_design.AOCS.AOCS_sizing_models import DisturbanceTorques
+from project.subsystems_design.AOCS.orbiter import Orbiter
 from definitions import MarsReveal
 
 class DesignProcess(MarsReveal):
@@ -44,7 +45,9 @@ class DesignProcess(MarsReveal):
 
 
         # ------------- Calculations -------------
-        moi = self.sc_moment_of_inertia(veh_props['mass'], veh_props['dims'])
+        # moi = self.sc_moment_of_inertia(veh_props['mass'], veh_props['dims'])
+
+        moi = veh_props['moi']
         # Magnetic torque
         magn_mars = (5 * 10 ** -8) * (3397 ** 3) / 2  # [T km^3] from Elements of S/c Engineering, Table 5.5
         planet_magnetic = kwargs.pop('planet_mag_field', magn_mars)
@@ -55,7 +58,8 @@ class DesignProcess(MarsReveal):
             T_mag = DT.mag_torque(planet_radius+self.h_orbit, planet_magnetic, orbiter_dipole)[0]
 
         # Solar torque
-        SA = DT.surface_area(veh_props['dims'])
+        # SA = DT.surface_area(veh_props['dims'])
+        SA = veh_props['surface area']
         T_sol = DT.solar_torque(SA, Cps, Cg, i, q=0.6)
 
         # Gravity gradient torque
@@ -140,16 +144,19 @@ if __name__ == '__main__':
     prob_dims = (Design.params['Struct']['Probe radius'], Design.params['Struct']['Probe height'])
     theta = Design.params['EPS']['max_pt_excur']  # Max excursion from nadir SC pointing
 
-    orbiter = {'mass': 3400,        # Jun-8
-               'dims': orb_dims,
-               'dipole': 0,
-               'cg': 0,
-               'c_pres aero': 0,
-               'c_pres solar': 0,
+    O = Orbiter(file_in)
+    orb_on_station_mass = 516.39  # Jun-9
+
+    orbiter_props = O.vehicle_props(orb_on_station_mass)
+    orbiter = {'dipole': 0,
                'solar incidence': 0,
                'pt excursion': theta,
                'Cd': 2.2,
                'q': 0.6}       # drag coefficient ( usually between 2 and 2.5) [SMAD]
+
+    for param, val in orbiter_props.items():
+        orbiter[param] = val
+
 
     probe = {'mass': 130,
              'dims': prob_dims,
@@ -163,8 +170,20 @@ if __name__ == '__main__':
              'q': 0.6}         # drag coefficient ( usually between 2 and 2.5) [SMAD]
 
 
-    orb_max_disturb = Design.id_max_torque(orbiter)
+    orb_max_disturb = Design.id_max_torque(orbiter) # [N m]
 
-    mom_storage = Design.mom_storage_RW(orb_max_disturb)
+    mom_storage = Design.mom_storage_RW(orb_max_disturb) #[N m s]
 
+
+    # Write to output
+    # Create separate output dictionary, to prevent accidental mix of in/outputs
+    out_params = Design.read_excel(file_in, sheet_name='AOCS')
+
+    # Modify values to the new calculated outputs
+    out_params['orb_max_disturb_torque'] = list(orb_max_disturb)[1]
+    out_params['orb_max_disturb_name'] = list(orb_max_disturb)[0]
+    out_params['orb_momentum_storage'] = mom_storage
+
+    # Save Values
+    Design.save_excel(out_params, file_in, 'AOCS')
     print(orb_max_disturb)
