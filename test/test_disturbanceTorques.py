@@ -8,7 +8,7 @@ date: 6/8/2020
 author: lmaio
 """
 from unittest import TestCase
-from project.subsystems_design.AOCS.AOCS_sizing_models import DisturbanceTorques
+from project.subsystems_design.AOCS.AOCS_disturb_torques import DisturbanceTorques
 
 
 class TestDisturbanceTorques(TestCase):

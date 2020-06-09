@@ -26,6 +26,15 @@ class PointMass():
         self.loc = location
         self.area = area
 
+    def add_thrust_v(self, vector):
+        self.t_vect = vector
+
+    def add_thrust_arm(self, vector):
+        self.t_arm = vector
+
+    def add_thrust_pair(self, pair):
+        self.t_pair = pair
+
 
 class Orbiter():
     def __init__(self, params_file):
@@ -59,12 +68,15 @@ class Orbiter():
         for name, obj in geom_dict.items():
             mass = kwargs.get('mass', obj['mass'])
             area = kwargs.get('area', obj['area'])
+            if np.isnan(area):
+                area = None
             faces = [obj['face1'], obj['face2']]
             offset = [obj['offset1'], obj['offset2']]
             loc = self.point_coords(faces, offset)
             pt_mass = PointMass(mass, loc, area)
 
             self.pt_masses[name] = pt_mass
+
 
     def pointmass_total(self, **kwargs):
         filter = kwargs.pop('filter', '')
@@ -125,7 +137,7 @@ class Orbiter():
         tot_A += body_A
 
         for name, obj in self.pt_masses.items():
-            if not np.isnan(obj.area) and name not in filter:
+            if obj.area and name not in filter:
                 tot_A += obj.area
                 totx += obj.area * obj.loc[0]
                 toty += obj.area * obj.loc[1]
@@ -135,6 +147,27 @@ class Orbiter():
         y = toty / tot_A
         z = totz / tot_A
         return (x,y,z), tot_A
+
+    def add_thrust_vectors(self, thrusters_dict):
+        for name, obj in thrusters_dict.items():
+            if name in list(self.pt_masses.keys()):
+                vector = np.array([obj['x'], obj['y'], obj['z']])
+                self.pt_masses[name].add_thrust_v(vector)
+                self.pt_masses[name].add_thrust_pair(obj['pair'])
+            else:
+                raise NameError('Not a valid thruster name')
+
+    def add_thruster_moment_arms(self, cg):
+        for name, obj in self.pt_masses.items():
+            if 'att' in name:
+                loc_v = np.array(obj.loc)
+                cg_v = np.array(cg)
+                arm = loc_v - cg_v
+                obj.add_thrust_arm(arm)
+
+
+
+
 
     def vehicle_props(self, total_mass, **kwargs):
         geo_file = 'project/subsystems_design/AOCS/geometry.xlsx'
@@ -159,7 +192,7 @@ class Orbiter():
         # Add Solar Array
         self.add_subsys_masses(geom['EPS'])
 
-        #### Compute remaining body mass
+        # ------ Compute body properties ----------
         component_mass = self.pointmass_total()
         central_lump_mass = total_mass - component_mass
 
@@ -176,13 +209,19 @@ class Orbiter():
         # Center of pressure solar
         cp_sol, SA_solar = self.center_of_pressure()
 
+        # Add thrust vectors
+        t_vect_data = self.M.read_excel(geo_file, sheet_name=['ThrustVectors'], columns=['name', 'x', 'y', 'z', 'pair'])
+        self.add_thrust_vectors(t_vect_data)
+        self.add_thruster_moment_arms(cg)
+
         new_props = {'mass': total_mass,  # Jun-8
                      'cg': cg,
                      'c_pres aero': cp_ae,
                      'c_pres solar': cp_sol,
                      'aero surface area': SA_aero,
                      'solar surface area': SA_solar,
-                     'moi': moi}
+                     'moi': moi,
+                     'pt masses': self.pt_masses}
 
         return new_props
 
