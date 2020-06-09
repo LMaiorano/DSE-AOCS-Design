@@ -12,17 +12,18 @@ from project.subsystems_design.AOCS.AOCS_sizing_models import DisturbanceTorques
 from project.subsystems_design.AOCS.orbiter import Orbiter
 from definitions import MarsReveal
 
-class DesignProcess(MarsReveal):
+class DesignProcess():
     def __init__(self, params_file):
-        super().__init__()
+        # super().__init__()
         self.params_file = params_file
-        self.params = self.read_excel(self.params_file)
+        self.M = MarsReveal()
+        self.params = self.M.read_excel(self.params_file)
         self.h_orbit = self.params['Astro']['h']
 
 
     def id_max_torque(self, veh_props, **kwargs):
         DT = DisturbanceTorques(self.params_file)
-        planet_radius = kwargs.pop('planet_radius', self.R_mars)
+        planet_radius = kwargs.pop('planet_radius', self.M.R_mars)
 
         orb_radius = planet_radius + self.h_orbit
 
@@ -58,17 +59,17 @@ class DesignProcess(MarsReveal):
             T_mag = DT.mag_torque(planet_radius+self.h_orbit, planet_magnetic, orbiter_dipole)[0]
 
         # Solar torque
-        # SA = DT.surface_area(veh_props['dims'])
-        SA = veh_props['surface area']
-        T_sol = DT.solar_torque(SA, Cps, Cg, i, q=0.6)
+        SA_sol = veh_props['solar surface area']
+        T_sol = DT.solar_torque(SA_sol, Cps, Cg, i, q=0.6)
 
         # Gravity gradient torque
         T_gg = DT.gg_torque(orb_radius, moi, theta)
 
         # Aerodynamic torque
-        rho = self.mars_atmos_props(self.h_orbit)[2]
-        V = np.sqrt(self.mu_mars*(2/(self.R_mars+self.h_orbit) - 1/orb_radius))
-        T_aero = DT.aero_torque(rho, Cd, SA, V, Cpa, Cg)
+        SA_aero = veh_props['aero surface area']
+        self.rho = self.M.mars_atmos_props(self.h_orbit*10**3)[2]
+        self.V = np.sqrt(self.M.mu_mars*(2/(self.M.R_mars+self.h_orbit) - 1/orb_radius))
+        T_aero, Drag_aero = DT.aero_torque(self.rho, Cd, SA_aero, self.V, Cpa, Cg)
 
         # ID max disturbance torque
         names = ['magnetic', 'solar', 'gravity_grad', 'aerodynamic']
@@ -79,7 +80,7 @@ class DesignProcess(MarsReveal):
                 maxT[1] = t
                 maxT[0] = n
 
-        return tuple(maxT)
+        return tuple(maxT), Drag_aero
 
 
 
@@ -97,7 +98,8 @@ class DesignProcess(MarsReveal):
         Returns:
 
         '''
-        moi = self.sc_moment_of_inertia(veh_props['mass'], veh_props['dims'])
+        # moi = self.M.sc_moment_of_inertia(veh_props['mass'], veh_props['dims'])
+        moi = veh_props['moi']
         I = max(moi)
 
         slew_torq = 4 * np.radians(angle) * I / (seconds**2)
@@ -116,8 +118,8 @@ class DesignProcess(MarsReveal):
 
         '''
         # Name options ['magnetic', 'solar', 'gravity_grad', 'aerodynamic']
-        mu = kwargs.pop('mu', self.mu_mars)
-        planet_radius = kwargs.pop('planet_radius', self.R_mars)
+        mu = kwargs.pop('mu', self.M.mu_mars)
+        planet_radius = kwargs.pop('planet_radius', self.M.R_mars)
         name, T = worst_torque
 
         orb_radius = planet_radius + self.h_orbit
@@ -146,8 +148,9 @@ if __name__ == '__main__':
 
     O = Orbiter(file_in)
     orb_on_station_mass = 516.39  # Jun-9
+    aerodyn_ignore = []#['sa1', 'sa2']#, 'TTC-earth'] # Objects to ignore for aerodynamic cp calculations
 
-    orbiter_props = O.vehicle_props(orb_on_station_mass)
+    orbiter_props = O.vehicle_props(orb_on_station_mass, aero_ignore=aerodyn_ignore)
     orbiter = {'dipole': 0,
                'solar incidence': 0,
                'pt excursion': theta,
@@ -170,20 +173,22 @@ if __name__ == '__main__':
              'q': 0.6}         # drag coefficient ( usually between 2 and 2.5) [SMAD]
 
 
-    orb_max_disturb = Design.id_max_torque(orbiter) # [N m]
+    orb_max_disturb, drag = Design.id_max_torque(orbiter) # [N m]
 
     mom_storage = Design.mom_storage_RW(orb_max_disturb) #[N m s]
 
 
-    # Write to output
+    # --------------- Write to output ---------------------
     # Create separate output dictionary, to prevent accidental mix of in/outputs
-    out_params = Design.read_excel(file_in, sheet_name='AOCS')
+    out_params = Design.M.read_excel(file_in, sheet_name='AOCS')
 
     # Modify values to the new calculated outputs
     out_params['orb_max_disturb_torque'] = list(orb_max_disturb)[1]
-    out_params['orb_max_disturb_name'] = list(orb_max_disturb)[0]
+    out_params['orb_max_disturb_type'] = list(orb_max_disturb)[0]
     out_params['orb_momentum_storage'] = mom_storage
+    out_params['ignored mass bodies'] = aerodyn_ignore
+    out_params['aero drag'] = drag
 
     # Save Values
-    Design.save_excel(out_params, file_in, 'AOCS')
+    Design.M.save_excel(out_params, file_in, 'AOCS')
     print(orb_max_disturb)

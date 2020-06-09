@@ -114,7 +114,8 @@ class Orbiter():
 
         return Ix, Iy, Iz
 
-    def center_of_pressure(self):
+    def center_of_pressure(self, **kwargs):
+        filter = kwargs.pop('ignore_objs', [])
         max_dims = list(self.body_dims)
         max_dims.sort(reverse=True)
         tot_A = totx = toty = totz = 0
@@ -123,8 +124,8 @@ class Orbiter():
         body_A = max_dims[0]*max_dims[1]
         tot_A += body_A
 
-        for obj in self.pt_masses.values():
-            if not np.isnan(obj.area):
+        for name, obj in self.pt_masses.items():
+            if not np.isnan(obj.area) and name not in filter:
                 tot_A += obj.area
                 totx += obj.area * obj.loc[0]
                 toty += obj.area * obj.loc[1]
@@ -135,7 +136,7 @@ class Orbiter():
         z = totz / tot_A
         return (x,y,z), tot_A
 
-    def vehicle_props(self, total_mass):
+    def vehicle_props(self, total_mass, **kwargs):
         geo_file = 'project/subsystems_design/AOCS/geometry.xlsx'
         prop = self.params['Prop']
 
@@ -168,14 +169,19 @@ class Orbiter():
         # Moment of inertia calc
         moi = self.full_moi(cg, central_lump_mass)
 
-        # Center of pressure
-        cp, SA = self.center_of_pressure()
+        # Center of pressure aero
+        aero_ignore = kwargs.pop('aero_ignore', [])
+        cp_ae, SA_aero = self.center_of_pressure(ignore_objs=aero_ignore)
+
+        # Center of pressure solar
+        cp_sol, SA_solar = self.center_of_pressure()
 
         new_props = {'mass': total_mass,  # Jun-8
                      'cg': cg,
-                     'c_pres aero': cp,
-                     'c_pres solar': cp,
-                     'surface area': SA,
+                     'c_pres aero': cp_ae,
+                     'c_pres solar': cp_sol,
+                     'aero surface area': SA_aero,
+                     'solar surface area': SA_solar,
                      'moi': moi}
 
         return new_props
@@ -188,41 +194,6 @@ if __name__ == '__main__':
 
     O = Orbiter(params_file)
     on_station_mass = 516.39  # Jun-9
-
-    # prop = O.params['Prop']
-    #
-    # geom_columns = ['name', 'face1', 'face2', 'offset1', 'offset2', 'mass', 'area']
-    # geom = O.M.read_excel(geo_file, sheet_name=['Thrusters', 'TTC', 'Fuel', 'EPS'], columns=geom_columns)
-    #
-    # # Add thrusters
-    # O.add_subsys_masses(geom['Thrusters'], mass=prop['Maintenance thruster mass'])
-    #
-    # att_thrust_mass = O.pointmass_total(filter='att')
-    # prop_sys_mass = prop['Circularisation propulsion system dry mass']+prop['Maintenance fuel mass'] #+prop['Circularisation fuel mass']
-    #
-    # # Add propellant tanks
-    # O.add_subsys_masses(geom['Fuel'], mass=(prop_sys_mass - att_thrust_mass) / 4)
-    #
-    # # Add TTC
-    # O.add_subsys_masses(geom['TTC'])
-    #
-    # # Add Solar Array
-    # O.add_subsys_masses(geom['EPS'])
-    #
-    #
-    # #### Compute remaining body mass
-    # component_mass = O.pointmass_total()
-    #
-    # central_lump_mass = sc_total_mass - component_mass
-    #
-    # # mass_breakdown = O.mass_breakdown()
-    # cg = O.center_of_gravity(central_lump_mass)
-    #
-    # # Moment of inertia calc
-    # moi = O.full_moi(cg, central_lump_mass)
-    #
-    # # Center of pressure
-    # cp = O.center_of_pressure()
 
     veh_props = O.vehicle_props(on_station_mass)
     print(veh_props)
