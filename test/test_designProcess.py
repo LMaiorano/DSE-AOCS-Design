@@ -35,7 +35,7 @@ class TestDesignProcess(TestCase):
         angle = 30
         time = 10*60 # [sec]
 
-        fs_out = self.Dsgn.slew_torque_RW(angle, time*60, self.fireSat)
+        fs_out = self.Dsgn.slew_torque_RW(angle, time, self.fireSat)
         fs_ref = 5.2e-4
 
         self.assertEqual(fs_ref, round(fs_out, 5))
