@@ -87,7 +87,7 @@ class DesignProcess(MarsReveal):
             angle: float
                 slew requirement [deg]
             time: float
-                slew time requirement
+                slew time requirement [sec]
             veh_props: dict
 
         Returns:
