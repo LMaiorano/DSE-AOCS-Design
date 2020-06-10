@@ -7,14 +7,18 @@ project: DSE-Mars-Reveal
 date: 6/10/2020
 author: lmaio
 """
-from project.subsystems_design.AOCS.vehicle import Orbiter
+from project.subsystems_design.AOCS.vehicle import Orbiter, update_geometry_file
 from project.subsystems_design.AOCS.AOCS_design_process import DesignProcess
+
+
 
 
 
 # Setup -------------------------
 file_in = 'project/subsystems_design/AOCS/Sub_Output.xlsx'
 AOCS_des_params = 'project/subsystems_design/AOCS/data/desgn_params.xlsx'
+
+update_geometry_file(file_in)
 
 # Orbiter Vehicle
 O = Orbiter(file_in, AOCS_des_params)
@@ -72,8 +76,7 @@ prop_mass = Design.propellent_mass(Design.mission, pulses, th_slew_maneuver, th_
 hw_reqs = {'RW': {'momentum': max_possible_mom,
                   'torque': max_possible_T},
            'IMU':'',
-           'star':'',
-           'comp':''}
+           'star':''}
 
 hardware_selection = Design.select_hardware(hw_reqs)
 

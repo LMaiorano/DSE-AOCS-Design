@@ -9,7 +9,6 @@ author: lmaio
 """
 import numpy as np
 from project.subsystems_design.AOCS.AOCS_disturb_torques import DisturbanceTorques
-from project.subsystems_design.AOCS.vehicle import Orbiter
 from definitions import MarsReveal
 
 class DesignProcess():
@@ -344,6 +343,8 @@ class DesignProcess():
         max_h = T_SA*time_sa + T_HGA*time_hga
 
         return max_T, max_h
+
+
 
 
 

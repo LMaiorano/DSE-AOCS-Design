@@ -7,9 +7,41 @@ project: DSE-Mars-Reveal
 date: 6/9/2020
 author: lmaio
 """
-from definitions import MarsReveal
+from definitions import MarsReveal, ROOT_DIR
 import numpy as np
 import pandas as pd
+import win32com.client as win32
+import os
+
+
+
+def update_geometry_file(sub_output):
+    M = MarsReveal()
+    params = M.read_excel(sub_output)
+    mass_ipts = M.read_excel('project/subsystems_design/AOCS/data/desgn_params.xlsx', sheet_name='PRIMARY INPUTS')
+
+    geom_file = 'project/subsystems_design/AOCS/data/geometry.xlsx'
+    geom = M.read_excel(geom_file, sheet_name='updates_from_sub')
+
+    changed = False
+    if geom['A_orb'] != params['EPS']['A_orb']:
+        geom['A_orb'] = params['EPS']['A_orb']
+        changed = True
+    if geom['orbiter_SA_mass'] != mass_ipts['orbiter_SA_mass']:
+        geom['orbiter_SA_mass'] = mass_ipts['orbiter_SA_mass']
+        changed = True
+
+    if changed:
+        M.save_excel(geom, geom_file, sheet_name='updates_from_sub')
+        print('Opening Geometry excel to recalculate')
+
+        excel = win32.gencache.EnsureDispatch('Excel.Application')
+        workbook = excel.Workbooks.Open(os.path.join(ROOT_DIR, geom_file))
+        # this must be the absolute path (r'C:/abc/def/ghi')
+        workbook.Save()
+        workbook.Close()
+        excel.Quit()
+
 
 class PointMass():
     def __init__(self, mass, location, area):

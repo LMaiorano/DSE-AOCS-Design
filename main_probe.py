@@ -10,11 +10,13 @@ author: lmaio
 
 
 
-from project.subsystems_design.AOCS.vehicle import Probe
+from project.subsystems_design.AOCS.vehicle import Probe, update_geometry_file
 from project.subsystems_design.AOCS.AOCS_design_process import DesignProcess
 
 file_in = 'project/subsystems_design/AOCS/Sub_Output.xlsx'
 AOCS_des_params = 'project/subsystems_design/AOCS/data/desgn_params.xlsx'
+
+update_geometry_file(file_in)
 
 P = Probe(file_in, AOCS_des_params)
 
