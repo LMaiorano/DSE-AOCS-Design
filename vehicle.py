@@ -241,7 +241,8 @@ class Orbiter():
                      'aero surface area': SA_aero,
                      'solar surface area': SA_solar,
                      'moi': moi,
-                     'pt masses': self.pt_masses}
+                     'pt masses': self.pt_masses,
+                     'body dims': self.body_dims}
 
         for param, val in new_props.items():
             self.props[param] = val

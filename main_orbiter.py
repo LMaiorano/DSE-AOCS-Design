@@ -30,18 +30,32 @@ Design = DesignProcess(file_in, AOCS_des_params, O.props)
 # Design Process
 
 # ------ Reaction wheel sizing
+# Max torque by external factors
+max_external_torque, drag, external_torques = Design.worst_torque(O.props)  # [N m] TODO: determine gimbal torques
 
-orb_max_disturb, drag, _ = Design.worst_torque(O.props)  # [N m] TODO: determine gimbal torques
+# Max angular momemtum capacity to handle cyclic torques (if cyclic torqes add together)
+mom_storage_per_orbit = Design.mom_storage_RW(max_external_torque)  # [N m s]
 
-mom_storage_per_orbit = Design.mom_storage_RW(orb_max_disturb)  # [N m s]
+# Momentum needed for yaw/roll accuracy (not included in  momentum storage b/c mom to counter this torque is already included)
+mom_for_accuracy = Design.mom_storage_for_accuracy_in_MW(max_external_torque, O.props['pt accuracy'])
 
-mom_for_accuracy = Design.mom_storage_for_accuracy_in_MW(orb_max_disturb, O.props['pt accuracy'])
-
+# Torque needed for slew maneuver
 torque_for_slew = Design.slew_torque_RW(Design.mission)
+
+# Worst case torque needed for moving of solar arrays and HGA
+max_app_T, max_app_h = Design.internal_counter_torque_RW()
+
+# Calculate worst-case scenario where everything happens at once
+max_possible_T = max_external_torque[1] + max_app_T + torque_for_slew
+max_possible_mom = max_app_h + mom_storage_per_orbit
+
+if max_possible_mom < mom_for_accuracy:
+    raise ValueError('Momentum for accuracy is driving in capacity design')
+
 
 # ------ Thruster sizing
 # min thrust to counteract disturbance torqe (likely not a driving factor)
-th_dist_torque = Design.thrust_force_disturbances(orb_max_disturb)
+th_dist_torque = Design.thrust_force_disturbances(max_external_torque)
 
 # minimum thrust for slew maneuver
 th_slew_maneuver = Design.thrust_force_slewing(Design.mission)
@@ -55,15 +69,16 @@ prop_mass = Design.propellent_mass(Design.mission, pulses, th_slew_maneuver, th_
 
 
 # Create hardware requirements
-hw_reqs = {'RW': {'momentum': max(mom_for_accuracy, mom_storage_per_orbit, mom_buildup),
-                  'torque': max(torque_for_slew, orb_max_disturb[1])},
+hw_reqs = {'RW': {'momentum': max_possible_mom,
+                  'torque': max_possible_T},
            'IMU':'',
-           'star':''}
+           'star':'',
+           'comp':''}
 
 hardware_selection = Design.select_hardware(hw_reqs)
 
 # Size AOCS subsystem
-size = Design.size_AOCS(hardware_selection) # needs thrusters and propellant
+size = Design.size_AOCS(hardware_selection) # Thrusters and propellant included in propulsion sys
 
 
 
@@ -76,15 +91,7 @@ size = Design.size_AOCS(hardware_selection) # needs thrusters and propellant
 # Create separate output dictionary, to prevent accidental mix of in/outputs
 out_params = Design.M.read_excel(file_in, sheet_name='AOCS')
 
-# Modify values to the new calculated outputs
-# out_params['orb_max_disturb_torque'] = list(orb_max_disturb)[1]
-# out_params['orb_max_disturb_type'] = list(orb_max_disturb)[0]
-# out_params['orb_momentum_storage'] = mom_storage_per_orbit
-# out_params['ignored mass bodies'] = aerodyn_ignore
-# out_params['aero drag'] = drag
-# out_params['thruster pulses'] = life_pulses
-# out_params['O min thrust momentum dump'] = th_mom_dump
-# out_params['O min thrust slew'] = th_slew_maneuver
+
 out_params['O RCS fuel'] = prop_mass
 for key, val in size.items():
     out_params['O '+key] = val
