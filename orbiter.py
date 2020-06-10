@@ -36,15 +36,17 @@ class PointMass():
         self.t_pair = pair
 
 
+
 class Orbiter():
-    def __init__(self, params_file):
+    def __init__(self, sub_output, mission_file):
         self.M = MarsReveal()
-        self._params_file = params_file
+        self._params_file = sub_output
         self.params = self.M.read_excel(self._params_file)
         self.body_dims = (self.params['Struct']['Orbiter body l'],
                           self.params['Struct']['Orbiter body w'],
                           self.params['Struct']['Orbiter body h'])
         self.pt_masses = {}
+        self.props = self.M.read_excel(mission_file, sheet_name='orb_props', columns=['name', 'value'])
 
     def point_coords(self, face_comb, offset):
         loc = [0,0,0]
@@ -169,8 +171,9 @@ class Orbiter():
 
 
 
-    def vehicle_props(self, total_mass, **kwargs):
-        geo_file = 'project/subsystems_design/AOCS/geometry.xlsx'
+    def vehicle_props(self, **kwargs):
+        total_mass = self.props['orbiter_mass']
+        geo_file = 'project/subsystems_design/AOCS/data/geometry.xlsx'
         prop = self.params['Prop']
 
         geom_columns = ['name', 'face1', 'face2', 'offset1', 'offset2', 'mass', 'area']
@@ -223,7 +226,9 @@ class Orbiter():
                      'moi': moi,
                      'pt masses': self.pt_masses}
 
-        return new_props
+        for param, val in new_props.items():
+            self.props[param] = val
+
 
 
 

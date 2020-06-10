@@ -13,13 +13,16 @@ from project.subsystems_design.AOCS.orbiter import Orbiter
 from definitions import MarsReveal
 
 class DesignProcess():
-    def __init__(self, params_file, veh_props):
+    def __init__(self, params_file, AOCS_des_params, veh_props):
         # super().__init__()
         self.params_file = params_file
         self.M = MarsReveal()
         self.params = self.M.read_excel(self.params_file)
         self.h_orbit = self.params['Astro']['h']
         self.veh = veh_props
+        self.mission = self.M.read_excel(AOCS_des_params, sheet_name='orb_mission', columns=['name', 'value'])
+        hw_cols = ['name', 'type','momentum','torque','mass','peak power','average power','volume','quantity']
+        self.hardware = self.M.read_excel(AOCS_des_params, sheet_name='hardware', columns=hw_cols)
 
 
     def worst_torque(self, veh_props, **kwargs):
@@ -50,6 +53,8 @@ class DesignProcess():
         # moi = self.sc_moment_of_inertia(veh_props['mass'], veh_props['dims'])
 
         moi = veh_props['moi']
+
+        # ---------   EXTERNAL TORQUES --------------
         # Magnetic torque
         magn_mars = (5 * 10 ** -8) * (3397 ** 3) / 2  # [T km^3] from Elements of S/c Engineering, Table 5.5
         planet_magnetic = kwargs.pop('planet_mag_field', magn_mars)
@@ -72,6 +77,15 @@ class DesignProcess():
         self.V = np.sqrt(self.M.mu_mars*(2/(self.M.R_mars+self.h_orbit) - 1/orb_radius))
         T_aero, Drag_aero = DT.aero_torque(self.rho, Cd, SA_aero, self.V, Cpa, Cg)
 
+        # ---------   TODO: INTERNAL TORQUES --------------
+        # Solar array gimbal
+
+
+        # HGA Gimbal
+
+
+
+
         # ID max disturbance torque
         names = ['magnetic', 'solar', 'gravity_grad', 'aerodynamic']
         torqs = [T_mag, T_sol, T_gg, T_aero]
@@ -83,7 +97,7 @@ class DesignProcess():
 
         return tuple(maxT), Drag_aero, torqs
 
-    def slew_torque_RW(self, angle, seconds, veh_props):
+    def slew_torque_RW(self, profile):
         '''Calculates torque for max-acceleration slew operations
 
         Args:
@@ -96,8 +110,9 @@ class DesignProcess():
         Returns:
 
         '''
+        angle, seconds = profile['slew_angle'], profile['slew_time']
         # moi = self.M.sc_moment_of_inertia(veh_props['mass'], veh_props['dims'])
-        moi = veh_props['moi']
+        moi = self.veh['moi']
         I = max(moi)
 
         slew_torq = 4 * np.radians(angle) * I / (seconds**2)
@@ -113,7 +128,7 @@ class DesignProcess():
                 worst-case disturbance torque (name, torque)
 
         Returns:
-
+            max momentum storage per orbit
         '''
 
         mu = kwargs.pop('mu', self.M.mu_mars)
@@ -227,7 +242,7 @@ class DesignProcess():
         return F
 
     def secular_momentum(self, mission):
-        orb_p_dump = 60 * 60 * 24 / Design.orb_period / mission['mom_dump_freq']  # number orbits per momentum dump
+        orb_p_dump = 60 * 60 * 24 / self.orb_period / mission['mom_dump_freq']  # number orbits per momentum dump
         orb_aero_T = self.worst_torque(self.veh)[2][3]
         return orb_aero_T*orb_p_dump
 
@@ -236,7 +251,7 @@ class DesignProcess():
         slew_pulses = 2 * pp['n_slew_axes'] * pp['n_slew_maneuvers']
         mom_pulses = 1 * 3 * 365 * pp['mom_dump_freq'] * pp['lifetime']
         tot_pulses = mom_pulses + slew_pulses
-        return tot_pulses, (slew_pulses, mom_pulses)
+        return int(np.ceil(tot_pulses)), (slew_pulses, mom_pulses)
 
 
     def propellent_mass(self, profile, pulses, slewF, momF):
@@ -248,97 +263,56 @@ class DesignProcess():
         m_prop = tot_imp/(Isp * self.M.g_earth)
         return m_prop
 
+    def select_hardware(self, hw_reqs):
+        hw = self.hardware
+        hw_selection = {}
+        for cat_name, cat_req in hw_reqs.items():
+            options = hw.copy()#[a for a in hw.keys() if hw[a]['type']==cat]
+            for a in hw.keys():
+                if hw[a]['type'] != cat_name:
+                    options.pop(a)
+
+            if len(options) > 1:
+                best_mass = float('inf')
+                choice = 'none'
+                for name, option in options.items():
+                    meets_reqs = 0
+                    for r_name, req in cat_req.items():
+                        if option[r_name] > req:
+                            meets_reqs += 1
+
+                    if meets_reqs == len(cat_req.keys()) and option['mass'] < best_mass:
+                        best_mass = option['mass']
+                        choice = name
+            else:
+                choice = list(options.keys())[0]
+
+            hw_selection[cat_name] = options[choice]
+            hw_selection[cat_name]['name'] = choice
+
+        return hw_selection
+
+
+    def size_AOCS(self, hw_selection):
+        size = {}
+        size['mass'] = 0
+        size['volume'] = 0
+        size['avg_power'] = 0
+
+        for cat, hw in hw_selection.items():
+            mass = hw['mass'] * hw['quantity']
+            vol = hw['volume'] * hw['quantity']
+            pwr = hw['average power'] * hw['quantity']
+
+            size['mass'] += mass
+            size['volume'] += vol
+            size['avg_power'] += pwr
+
+        return size
+
 
 
 
 
 if __name__ == '__main__':
-    file_in = 'project/subsystems_design/AOCS/Sub_Output.xlsx'
-    AOCS_mission = 'project/subsystems_design/AOCS/mission_profile.xlsx'
-
-    O = Orbiter(file_in)
-    orb_on_station_mass = 516.39  # Jun-9
-    aerodyn_ignore = []#['sa1', 'sa2']#, 'TTC-earth'] # Objects to ignore for aerodynamic cp calculations
-
-    orbiter_props = O.vehicle_props(orb_on_station_mass, aero_ignore=aerodyn_ignore)
-    orbiter = {'dipole': 0,
-               'solar incidence': 0,
-               'pt excursion': 23.5, #eps
-               'Cd': 2.2,
-               'q': 0.6,
-               'pt accuracy': .5}  # drag coefficient ( usually between 2 and 2.5) [SMAD]
-
-    for param, val in orbiter_props.items():
-        orbiter[param] = val
-
-    # ---- Design object -------
-    Design = DesignProcess(file_in, orbiter)
-    mission = Design.M.read_excel(AOCS_mission, sheet_name='orbiter', columns=['name', 'value'])
-
-    # orb_dims = (Design.params['Struct']['Orbiter radius'], Design.params['Struct']['Orbiter height']) # FIXME: should be box
-    # prob_dims = (Design.params['Struct']['Probe radius'], Design.params['Struct']['Probe height'])
-    # theta = Design.params['EPS']['max_pt_excur']  # Max excursion from nadir SC pointing
-
-
-
-
-
-    # probe = {'mass': 130,
-    #          'dims': prob_dims,
-    #          'dipole': 0,
-    #          'cg': 0,
-    #          'c_pres aero': 0,
-    #          'c_pres solar': 0,
-    #          'solar incidence': 0,
-    #          'pt excursion': 0,
-    #          'Cd': 2.2,
-    #          'q': 0.6}         # drag coefficient ( usually between 2 and 2.5) [SMAD]
-
-
-    # ------ Start sizing --------
-
-
-
-    orb_max_disturb, drag, _ = Design.worst_torque(orbiter) # [N m]
-
-    mom_storage = Design.mom_storage_RW(orb_max_disturb) #[N m s]
-
-
-    mom_wheel_accuracy = Design.mom_storage_for_accuracy_in_MW(orb_max_disturb, orbiter['pt accuracy'])
-
-    # Thruster sizing TODO: Check with probes onboard
-    th_dist_torque = Design.thrust_force_disturbances(orb_max_disturb)
-
-    th_slew_maneuver = Design.thrust_force_slewing(mission)
-
-    mom_buildup = Design.secular_momentum(mission)
-    th_mom_dump = Design.thrust_force_momentum_dump(mom_buildup, mission['burn_time'])
-
-    life_pulses, pulses = Design.thruster_pulse_life(mission)
-
-    prop_mass = Design.propellent_mass(mission, pulses, th_slew_maneuver, th_mom_dump)
-
-
-
-
-
-
-
-    # --------------- Write to output ---------------------
-    # Create separate output dictionary, to prevent accidental mix of in/outputs
-    out_params = Design.M.read_excel(file_in, sheet_name='AOCS')
-
-    # Modify values to the new calculated outputs
-    out_params['orb_max_disturb_torque'] = list(orb_max_disturb)[1]
-    out_params['orb_max_disturb_type'] = list(orb_max_disturb)[0]
-    out_params['orb_momentum_storage'] = mom_storage
-    out_params['ignored mass bodies'] = aerodyn_ignore
-    out_params['aero drag'] = drag
-    out_params['thruster pulses'] = life_pulses
-    out_params['min thrust momentum dump'] = th_mom_dump
-    out_params['min thrust slew'] = th_slew_maneuver
-    out_params['O RCS fuel'] = prop_mass
-
-    # Save Values
-    Design.M.save_excel(out_params, file_in, 'AOCS')
-    # print(orb_max_disturb)
+    print('See main_orbiter.py')
