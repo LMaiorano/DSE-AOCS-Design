@@ -7,7 +7,7 @@ project: DSE-Mars-Reveal
 date: 6/10/2020
 author: lmaio
 """
-from project.subsystems_design.AOCS.orbiter import Orbiter
+from project.subsystems_design.AOCS.vehicle import Orbiter
 from project.subsystems_design.AOCS.AOCS_design_process import DesignProcess
 
 
@@ -69,20 +69,25 @@ size = Design.size_AOCS(hardware_selection) # needs thrusters and propellant
 
 
 
+
+
+
 # --------------- Write to output ---------------------
 # Create separate output dictionary, to prevent accidental mix of in/outputs
 out_params = Design.M.read_excel(file_in, sheet_name='AOCS')
 
 # Modify values to the new calculated outputs
-out_params['orb_max_disturb_torque'] = list(orb_max_disturb)[1]
-out_params['orb_max_disturb_type'] = list(orb_max_disturb)[0]
-out_params['orb_momentum_storage'] = mom_storage_per_orbit
-out_params['ignored mass bodies'] = aerodyn_ignore
-out_params['aero drag'] = drag
-out_params['thruster pulses'] = life_pulses
-out_params['min thrust momentum dump'] = th_mom_dump
-out_params['min thrust slew'] = th_slew_maneuver
+# out_params['orb_max_disturb_torque'] = list(orb_max_disturb)[1]
+# out_params['orb_max_disturb_type'] = list(orb_max_disturb)[0]
+# out_params['orb_momentum_storage'] = mom_storage_per_orbit
+# out_params['ignored mass bodies'] = aerodyn_ignore
+# out_params['aero drag'] = drag
+# out_params['thruster pulses'] = life_pulses
+# out_params['O min thrust momentum dump'] = th_mom_dump
+# out_params['O min thrust slew'] = th_slew_maneuver
 out_params['O RCS fuel'] = prop_mass
+for key, val in size.items():
+    out_params['O '+key] = val
 
 # Save Values
 Design.M.save_excel(out_params, file_in, 'AOCS')

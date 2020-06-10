@@ -9,7 +9,7 @@ author: lmaio
 """
 from unittest import TestCase, skip
 from project.subsystems_design.AOCS.AOCS_design_process import DesignProcess
-from project.subsystems_design.AOCS.orbiter import Orbiter
+from project.subsystems_design.AOCS.vehicle import Orbiter
 
 
 class TestDesignProcess(TestCase):

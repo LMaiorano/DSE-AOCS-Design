@@ -35,6 +35,8 @@ class PointMass():
     def add_thrust_pair(self, pair):
         self.t_pair = pair
 
+    def add_moi(self, moi):
+        self.moi = moi
 
 
 class Orbiter():
@@ -167,7 +169,15 @@ class Orbiter():
                 arm = loc_v - cg_v
                 obj.add_thrust_arm(arm)
 
-
+    def add_moi_for_gimbals(self, geom):
+        # for comp in geom.values():
+        #     for d in comp.values():
+        #         d['moi'] = [d['Ix'], d['Iy'], d['Iz']]
+        for sys in geom.values():
+            for name, comp in sys.items():
+                comp['moi'] = [comp['Ix'], comp['Iy'], comp['Iz']]
+                if sum(comp['moi']) > 0:
+                    self.pt_masses[name].add_moi(comp['moi'])
 
 
 
@@ -212,10 +222,17 @@ class Orbiter():
         # Center of pressure solar
         cp_sol, SA_solar = self.center_of_pressure()
 
+
+        # -------- Add additional data ------------
         # Add thrust vectors
         t_vect_data = self.M.read_excel(geo_file, sheet_name=['ThrustVectors'], columns=['name', 'x', 'y', 'z', 'pair'])
         self.add_thrust_vectors(t_vect_data)
         self.add_thruster_moment_arms(cg)
+
+        # Appendage gimbal MOI
+        gim_geom = self.M.read_excel(geo_file, sheet_name=['TTC', 'EPS'], columns=['name', 'Ix', 'Iy', 'Iz'])
+        self.add_moi_for_gimbals(gim_geom)
+
 
         new_props = {'mass': total_mass,  # Jun-8
                      'cg': cg,
@@ -231,13 +248,30 @@ class Orbiter():
 
 
 
+class Probe():
+    def __init__(self, sub_output, mission_file):
+        self.M = MarsReveal()
+        self._params_file = sub_output
+        self.params = self.M.read_excel(self._params_file)
+        self.body_dims = (self.params['Struct']['Orbiter body l'],
+                          self.params['Struct']['Orbiter body w'],
+                          self.params['Struct']['Orbiter body h'])
+        self.pt_masses = {}
+        self.props = self.M.read_excel(mission_file, sheet_name='probe_props', columns=['name', 'value'])
+
+
 
 if __name__ == '__main__':
     params_file = 'project/subsystems_design/AOCS/Sub_Output.xlsx'
     geo_file = 'project/subsystems_design/AOCS/geometry.xlsx'
 
-    O = Orbiter(params_file)
-    on_station_mass = 516.39  # Jun-9
+    M = MarsReveal()
 
-    veh_props = O.vehicle_props(on_station_mass)
-    print(veh_props)
+    # For
+    HGA_mass = 45.3
+    HGA_dims = [1.5, 0,5]
+    HGA_moi = M.sc_moment_of_inertia(HGA_mass, HGA_dims)
+
+
+
+    print('end')

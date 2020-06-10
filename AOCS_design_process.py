@@ -9,18 +9,19 @@ author: lmaio
 """
 import numpy as np
 from project.subsystems_design.AOCS.AOCS_disturb_torques import DisturbanceTorques
-from project.subsystems_design.AOCS.orbiter import Orbiter
+from project.subsystems_design.AOCS.vehicle import Orbiter
 from definitions import MarsReveal
 
 class DesignProcess():
-    def __init__(self, params_file, AOCS_des_params, veh_props):
-        # super().__init__()
+    def __init__(self, params_file, AOCS_des_params, veh_props, **kwargs):
+        veh_typ = kwargs.pop('vehicle', 'orb')
         self.params_file = params_file
         self.M = MarsReveal()
         self.params = self.M.read_excel(self.params_file)
         self.h_orbit = self.params['Astro']['h']
         self.veh = veh_props
-        self.mission = self.M.read_excel(AOCS_des_params, sheet_name='orb_mission', columns=['name', 'value'])
+        self.mission = self.M.read_excel(AOCS_des_params, sheet_name=veh_typ+'_mission', columns=['name', 'value'])
+
         hw_cols = ['name', 'type','momentum','torque','mass','peak power','average power','volume','quantity']
         self.hardware = self.M.read_excel(AOCS_des_params, sheet_name='hardware', columns=hw_cols)
 
@@ -302,7 +303,7 @@ class DesignProcess():
         for cat, hw in hw_selection.items():
             mass = hw['mass'] * hw['quantity']
             vol = hw['volume'] * hw['quantity']
-            pwr = hw['average power'] * hw['quantity']
+            pwr = hw['average power'] * (hw['quantity'] -1)
 
             size['mass'] += mass
             size['volume'] += vol
