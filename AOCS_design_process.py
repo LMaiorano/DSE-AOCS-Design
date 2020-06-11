@@ -350,4 +350,4 @@ class DesignProcess():
 
 
 if __name__ == '__main__':
-    print('See main_orbiter.py')
+    print('See orbiter.py')
