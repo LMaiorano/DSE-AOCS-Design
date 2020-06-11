@@ -23,6 +23,7 @@ if __name__ == '__main__':
     print('Sizing orbiter ...')
     orbiter_sizing(file_in, AOCS_des_params)
 
+    print()
     print('Sizing probe ...')
     probe_sizing(file_in, AOCS_des_params)
 

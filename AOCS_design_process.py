@@ -307,6 +307,7 @@ class DesignProcess():
             size['volume'] += vol
             size['avg_power'] += pwr
 
+        size['volume'] = round(size['volume'], 4)
         return size
 
     def appendage_torque(self, app):

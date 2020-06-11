@@ -60,7 +60,9 @@ def probe_sizing(file_in, AOCS_des_params):
 
 
     for key, val in probe_sizing.items():
-        out_params['P '+key] = val
+        name = 'P ' + key
+        print(f'{name}: {val}')
+        out_params[name] = val
 
     # Save Values
     Design.M.save_excel(out_params, file_in, 'AOCS')

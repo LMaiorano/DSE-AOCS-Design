@@ -98,7 +98,9 @@ def orbiter_sizing(file_in, AOCS_des_params):
 
     out_params['O RCS fuel'] = prop_mass
     for key, val in size.items():
-        out_params['O '+key] = val
+        name = 'O '+key
+        print(f'{name}: {val}')
+        out_params[name] = val
 
     # Save Values
     Design.M.save_excel(out_params, file_in, 'AOCS')
