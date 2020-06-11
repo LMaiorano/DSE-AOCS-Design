@@ -106,6 +106,8 @@ def orbiter_sizing(file_in, AOCS_des_params):
     Design.M.save_excel(out_params, file_in, 'AOCS')
     # print(prop_mass)
 
+    return hardware_selection
+
 if __name__ == '__main__':
     # Setup -------------------------
     file_in = 'project/subsystems_design/Sub_Output.xlsx'
