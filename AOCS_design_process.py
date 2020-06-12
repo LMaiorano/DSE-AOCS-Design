@@ -307,6 +307,7 @@ class DesignProcess():
             size['volume'] += vol
             size['avg_power'] += pwr
 
+        size['volume'] = round(size['volume'], 4)
         return size
 
     def appendage_torque(self, app):
@@ -350,4 +351,4 @@ class DesignProcess():
 
 
 if __name__ == '__main__':
-    print('See main_orbiter.py')
+    print('See orbiter.py')

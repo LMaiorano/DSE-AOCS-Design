@@ -295,7 +295,7 @@ class Probe():
 
 
 if __name__ == '__main__':
-    params_file = 'project/subsystems_design/AOCS/Sub_Output.xlsx'
+    params_file = 'project/subsystems_design/Sub_Output.xlsx'
     geo_file = 'project/subsystems_design/AOCS/geometry.xlsx'
 
     M = MarsReveal()

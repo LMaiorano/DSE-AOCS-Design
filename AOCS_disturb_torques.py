@@ -130,11 +130,11 @@ class DisturbanceTorques(MarsReveal):
 
 
 if __name__ == '__main__':
-    file_in = 'project/subsystems_design/AOCS/Sub_Output.xlsx'
+    file_in = 'project/subsystems_design/Sub_Output.xlsx'
     DT = DisturbanceTorques(file_in)
 
     # # Subsystem Excel filepath, relative to project root.
-    # file_in = 'project/subsystems_design/AOCS/Sub_Output.xlsx'
+    # file_in = 'project/subsystems_design/Sub_Output.xlsx'
     #
     # #### Read all inputs ------------
     # in_params = M.read_excel(file_in)
