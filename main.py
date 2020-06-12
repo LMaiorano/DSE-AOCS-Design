@@ -19,9 +19,11 @@ if __name__ == '__main__':
     print('!!! Update total masses in AOCS/data/desgn_params.xlsx: sheet PRIMARY INPUTS !!!!')
     print(' ------------------------------- ')
     print()
+    #input('< Press enter to confirm masses are up to date>')
+    print()
 
     print('Sizing orbiter ...')
-    orbiter_sizing(file_in, AOCS_des_params)
+    orb_hw = orbiter_sizing(file_in, AOCS_des_params)
 
     print()
     print('Sizing probe ...')
