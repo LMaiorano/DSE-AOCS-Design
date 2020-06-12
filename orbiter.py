@@ -53,7 +53,7 @@ def orbiter_sizing(file_in, AOCS_des_params):
 
     if max_possible_mom < mom_for_accuracy:
         raise ValueError('Momentum for accuracy is driving in capacity design')
-
+        # max_possible_mom = mom_for_accuracy
 
     # ------ Thruster sizing
     # min thrust to counteract disturbance torqe (likely not a driving factor)

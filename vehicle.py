@@ -219,7 +219,7 @@ class Orbiter():
         prop = self.params['Prop']
 
         geom_columns = ['name', 'face1', 'face2', 'offset1', 'offset2', 'mass', 'area']
-        geom = self.M.read_excel(geo_file, sheet_name=['Thrusters', 'TTC', 'Fuel', 'EPS'], columns=geom_columns)
+        geom = self.M.read_excel(geo_file, sheet_name=['Thrusters', 'TTC', 'Fuel', 'EPS', 'Probes'], columns=geom_columns)
 
         # Add thrusters
         self.add_subsys_masses(geom['Thrusters'], mass=prop['Maintenance thruster mass'])
@@ -233,6 +233,9 @@ class Orbiter():
 
         # Add TTC
         self.add_subsys_masses(geom['TTC'])
+
+        # Add probes
+        # self.add_subsys_masses(geom['Probes']) #########################
 
         # Add Solar Array
         self.add_subsys_masses(geom['EPS'])
