@@ -52,9 +52,7 @@ class TestDisturbanceTorques(TestCase):
         self.assertEqual(fs_ref, round(fs_out, 7))
 
     def test_gg_torque(self):
-        R = 7078
-        Iz = 90
-        Iy = 60
+        R = 7078.0
         theta = 1
         moi = (90, 60, 90)
         mu_earth = 3.986e14

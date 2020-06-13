@@ -33,7 +33,7 @@ def orbiter_sizing(file_in, AOCS_des_params):
 
     # ------ Reaction wheel sizing
     # Max torque by external factors
-    max_external_torque, drag, external_torques = Design.worst_torque(O.props)  # [N m] TODO: determine gimbal torques
+    max_external_torque, drag, external_torques = Design.worst_torque(O.props)  # [N m]
 
     # Max angular momemtum capacity to handle cyclic torques (if cyclic torqes add together)
     mom_storage_per_orbit = Design.mom_storage_RW(max_external_torque)  # [N m s]

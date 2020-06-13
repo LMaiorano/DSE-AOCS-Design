@@ -215,7 +215,9 @@ class Orbiter():
 
     def vehicle_props(self, **kwargs):
         total_mass = self.props['orbiter_mass']
-        geo_file = 'project/subsystems_design/AOCS/data/geometry.xlsx'
+        geometry_file = 'project/subsystems_design/AOCS/data/geometry.xlsx'
+        geo_file = kwargs.pop('geometry_file', geometry_file)
+
         prop = self.params['Prop']
 
         geom_columns = ['name', 'face1', 'face2', 'offset1', 'offset2', 'mass', 'area']

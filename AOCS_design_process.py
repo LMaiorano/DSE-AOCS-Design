@@ -70,17 +70,21 @@ class DesignProcess():
             T_mag = DT.mag_torque(planet_radius+self.h_orbit, planet_magnetic, orbiter_dipole)[0]
 
         # Solar torque
+        sol_const = kwargs.pop('solar_const', self.M.solar_irr)
         SA_sol = veh_props['solar surface area']
-        T_sol = DT.solar_torque(SA_sol, Cps, Cg, i, q=0.6)
+        T_sol = DT.solar_torque(SA_sol, Cps, Cg, i, q=0.6, solar_const=sol_const)
 
         # Gravity gradient torque
-        T_gg = DT.gg_torque(orb_radius, moi, theta)
+        mu = kwargs.pop('mu', self.M.mu_earth)
+        T_gg = DT.gg_torque(orb_radius, moi, theta, mu=mu)
 
         # Aerodynamic torque
         SA_aero = veh_props['aero surface area']
         self.rho = self.M.mars_atmos_props(self.h_orbit*10**3)[2]
         self.V = np.sqrt(self.M.mu_mars*(2/(self.M.R_mars+self.h_orbit) - 1/orb_radius))
-        T_aero, Drag_aero = DT.aero_torque(self.rho, Cd, SA_aero, self.V, Cpa, Cg)
+        rho = kwargs.pop('rho', self.rho)
+        V = kwargs.pop('V', self.V)
+        T_aero, Drag_aero = DT.aero_torque(rho, Cd, SA_aero, V, Cpa, Cg)
 
 
 
@@ -98,7 +102,7 @@ class DesignProcess():
 
         return tuple(maxT), Drag_aero, torqs
 
-    def slew_torque_RW(self, profile):
+    def slew_torque_RW(self, profile, **kwargs):
         '''Calculates torque for max-acceleration slew operations
 
         Args:
@@ -111,9 +115,10 @@ class DesignProcess():
         Returns:
 
         '''
-        angle, seconds = profile['slew_angle'], profile['slew_time']
+        angle, prof_seconds = profile['slew_angle'], profile['slew_time']
+        seconds = kwargs.pop('seconds', prof_seconds)
         # moi = self.M.sc_moment_of_inertia(veh_props['mass'], veh_props['dims'])
-        moi = self.veh['moi']
+        moi = kwargs.pop('moi', self.veh['moi'])
         I = max(moi)
 
         slew_torq = 4 * np.radians(angle) * I / (seconds**2)
@@ -135,18 +140,18 @@ class DesignProcess():
 
 
         name, T = worst_torque
-
+        orb_period = kwargs.pop('orb_period', self.orb_period)
 
         # Name options ['magnetic', 'solar', 'gravity_grad', 'aerodynamic']
         if name in ['magnetic', 'solar']:
             # half cyclic
-            h = T * self.orb_period / 2 *0.707
+            h = T * orb_period/ 2 * 0.707
         elif name == 'gravity_grad':
             # quarter cyclic
-            h = T * self.orb_period / 4 *0.707
+            h = T * orb_period / 4 * 0.707
         else:
             # secular
-            h = T * self.orb_period
+            h = T * orb_period
         return h
 
     def mom_storage_for_accuracy_in_MW(self, worst_torque, accuracy, **kwargs):
@@ -208,35 +213,40 @@ class DesignProcess():
         return sum(arms)
 
 
-    def thrust_force_disturbances(self, worst_torque):
+    def thrust_force_disturbances(self, worst_torque, L=None):
         '''Min total thrust force of a couple for worst disturbance torque
             Uses shortest (worst case) thruster arm to cg or sizing (1D)
         Returns: [N] minimum required thrust
         '''
-        L = self._shortest_effective_thrust_arm()
+        if not L:
+            L = self._shortest_effective_thrust_arm()
         F = worst_torque[1]/L
         return F
 
-    def thrust_force_slewing(self, profile):
-        angle, seconds = profile['slew_angle'], profile['slew_time']
+    def thrust_force_slewing(self, profile, L=None, **kwargs):
+        angle, prof_seconds = profile['slew_angle'], profile['slew_time']
 
-        L = self._shortest_effective_thrust_arm()
+        seconds = kwargs.pop('seconds', prof_seconds)
+
+        if not L:
+            L = self._shortest_effective_thrust_arm()
         rate = angle/seconds # [deg/sec]
         accel_t = seconds * profile['slew_burn_pct'] # [sec]
-        accel = rate/ accel_t # [deg/sec^2]
+        accel = np.radians(rate/ accel_t) # [rad/sec^2]
 
-        moi = self.veh['moi']
+        moi = kwargs.pop('moi', self.veh['moi'])
         F = max(moi) * accel / L
         return F
 
 
-    def thrust_force_momentum_dump(self, stored_momentum, burn_time):
+    def thrust_force_momentum_dump(self, stored_momentum, burn_time, L=None):
         '''Uses shortest (worst case) thruster arm to cg or sizing (1D)
         Args:
             stored_momentum: [N m s]
             burn_time: [s]
         '''
-        L = self._shortest_effective_thrust_arm()
+        if not L:
+            L = self._shortest_effective_thrust_arm()
         F = stored_momentum / (L * burn_time)
         return F
 
@@ -253,13 +263,14 @@ class DesignProcess():
         return int(np.ceil(tot_pulses)), (slew_pulses, mom_pulses)
 
 
-    def propellent_mass(self, profile, pulses, slewF, momF):
+    def propellent_mass(self, profile, pulses, slewF, momF, **kwargs):
+        g = kwargs.pop('g_planet', self.M.g_earth)
         s_puls, m_puls = pulses
         Isp = self.params['Prop']['Maintenance Isp']
         tot_imp = s_puls * profile['slew_burn_pct']*profile['slew_time'] * slewF \
                   + m_puls*profile['burn_time']*momF
 
-        m_prop = tot_imp/(Isp * self.M.g_earth)
+        m_prop = tot_imp/(Isp * g)
         return m_prop
 
     def select_hardware(self, hw_reqs):
