@@ -14,12 +14,21 @@ from project.subsystems_design.AOCS.vehicle import Orbiter
 
 class TestDesignProcess(TestCase):
     def setUp(self) -> None:
-        test_params = 'project/subsystems_design/AOCS/test/ref_Sub_Output.xlsx'
+        ref_sub_output = 'project/subsystems_design/AOCS/test/ref_Sub_Output.xlsx'
+        ref_des_params = 'project/subsystems_design/AOCS/test/desgn_params_VV.xlsx'
 
-        orbiter = self.orbiter_props(test_params)
+
+        # Orbiter Vehicle
+        O = Orbiter(ref_sub_output, ref_des_params)
+        aerodyn_ignore = []  # ['sa1', 'sa2']#, 'TTC-earth'] # Objects to ignore for aerodynamic cp calculations
+
+        O.vehicle_props(aero_ignore=aerodyn_ignore)  # compute vehicle properties
+
+        # ---- Design object -------
+        self.Dsgn= DesignProcess(ref_sub_output, ref_des_params, O.props)
 
 
-        self.Dsgn = DesignProcess(test_params, orbiter)
+
         self.fireSat = {'mass': 215,
                         'dims': (1.294, 1.82998, 1.294),
                         'dipole': 0,
@@ -66,7 +75,7 @@ class TestDesignProcess(TestCase):
         TD = ('gravity_grad', 4.5e-5)
 
 
-        fs_out = self.Dsgn.mom_storage_RW(TD, mu=self.Dsgn.mu_earth, planet_radius=6378)
+        fs_out = self.Dsgn.mom_storage_RW(TD, mu=self.Dsgn.M.mu_earth, planet_radius=6378)
         fs_ref = 4.7e-2
 
         self.assertEqual(fs_ref, round(fs_out, 3))

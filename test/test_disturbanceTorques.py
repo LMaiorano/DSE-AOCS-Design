@@ -73,7 +73,7 @@ class TestDisturbanceTorques(TestCase):
         rho = 1e-13
         Cd = 2
 
-        fs_out = self.DT.aero_torque(rho, Cd, A, V, Cpa, cg)
+        fs_out,  _= self.DT.aero_torque(rho, Cd, A, V, Cpa, cg)
         fs_ref = 3.4e-6
 
         self.assertEqual(fs_ref, round(fs_out, 7))
