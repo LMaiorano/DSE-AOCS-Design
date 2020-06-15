@@ -8,6 +8,7 @@ date: 6/8/2020
 author: lmaio
 """
 import numpy as np
+import pandas as pd
 from project.subsystems_design.AOCS.AOCS_disturb_torques import DisturbanceTorques
 from definitions import MarsReveal
 
@@ -36,7 +37,7 @@ class DesignProcess():
 
         orb_radius = planet_radius + self.h_orbit
 
-
+        results = {}
 
         # ------- Inputs -------
         # Magnetic
@@ -69,22 +70,28 @@ class DesignProcess():
         else:
             T_mag = DT.mag_torque(planet_radius+self.h_orbit, planet_magnetic, orbiter_dipole)[0]
 
+        results['Magnetic Disturbance Torque'] = T_mag
+
         # Solar torque
         sol_const = kwargs.pop('solar_const', self.M.solar_irr)
         SA_sol = veh_props['solar surface area']
         T_sol = DT.solar_torque(SA_sol, Cps, Cg, i, q=0.6, solar_const=sol_const)
+        results['Solar Disturbance Torque'] = T_sol
 
         # Gravity gradient torque
         mu = kwargs.pop('mu', self.M.mu_earth)
         T_gg = DT.gg_torque(orb_radius, moi, theta, mu=mu)
+        results['Gravity Gradient Torque'] = T_gg
 
         # Aerodynamic torque
         SA_aero = veh_props['aero surface area']
-        self.rho = self.M.mars_atmos_props(self.h_orbit*10**3)[2]
-        self.V = np.sqrt(self.M.mu_mars*(2/(self.M.R_mars+self.h_orbit) - 1/orb_radius))
+        h_orbit = self.h_orbit #self.params['Astro']['aerobraking peri']
+        self.rho = self.M.mars_atmos_props(h_orbit*10**3)[2]
+        self.V = np.sqrt(self.M.mu_mars*(2/(self.M.R_mars+h_orbit) - 1/orb_radius))
         rho = kwargs.pop('rho', self.rho)
         V = kwargs.pop('V', self.V)
         T_aero, Drag_aero = DT.aero_torque(rho, Cd, SA_aero, V, Cpa, Cg)
+        results['Aerodynamic Disturbance Torque'] = T_aero
 
 
 
@@ -100,7 +107,9 @@ class DesignProcess():
                 maxT[1] = t
                 maxT[0] = n
 
-        return tuple(maxT), Drag_aero, torqs
+        results_df = pd.DataFrame.from_dict(results, orient='index', columns=['Value'])
+
+        return tuple(maxT), results_df, torqs
 
     def slew_torque_RW(self, profile, **kwargs):
         '''Calculates torque for max-acceleration slew operations
