@@ -109,7 +109,7 @@ class DesignProcess():
 
         results_df = pd.DataFrame.from_dict(results, orient='index', columns=['Value'])
 
-        return tuple(maxT), results_df, torqs
+        return tuple(maxT), results, torqs
 
     def slew_torque_RW(self, profile, **kwargs):
         '''Calculates torque for max-acceleration slew operations

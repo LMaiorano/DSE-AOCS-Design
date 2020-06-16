@@ -8,6 +8,7 @@ date: 6/11/2020
 author: lmaio
 """
 import warnings
+from LuigiPyTools import LatexPandas
 from project.subsystems_design.AOCS.orbiter import orbiter_sizing
 from project.subsystems_design.AOCS.probe import probe_sizing
 
@@ -23,7 +24,11 @@ if __name__ == '__main__':
     print()
 
     print('Sizing orbiter ...')
-    orb_hw = orbiter_sizing(file_in, AOCS_des_params)
+    orb_hw, design_results = orbiter_sizing(file_in, AOCS_des_params)
+
+    # LP = LatexPandas(design_results)
+    # LP.gen_tex_table('orbiter_desgn.tex', "design results")
+
 
     print()
     print('Sizing probe ...')
