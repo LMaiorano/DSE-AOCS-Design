@@ -65,23 +65,23 @@ class DesignProcess():
         magn_mars = (5 * 10 ** -8) * (3397 ** 3) / 2  # [T km^3] from Elements of S/c Engineering, Table 5.5
         planet_magnetic = kwargs.pop('planet_mag_field', magn_mars)
 
-        if DT.det_mag_neg(): # Determine if mars field will have negligible effect
-            T_mag = 0
-        else:
-            T_mag = DT.mag_torque(planet_radius+self.h_orbit, planet_magnetic, orbiter_dipole)[0]
+        # if DT.det_mag_neg(): # Determine if mars field will have negligible effect
+        #     T_mag = 0
+        # else:
+        T_mag = DT.mag_torque(planet_radius+self.h_orbit, planet_magnetic, orbiter_dipole)[0]
 
-        results['Magnetic Disturbance Torque'] = T_mag
+        results['Magnetic Disturbance Torque'] = [T_mag, 'N m']
 
         # Solar torque
         sol_const = kwargs.pop('solar_const', self.M.solar_irr)
         SA_sol = veh_props['solar surface area']
         T_sol = DT.solar_torque(SA_sol, Cps, Cg, i, q=0.6, solar_const=sol_const)
-        results['Solar Disturbance Torque'] = T_sol
+        results['Solar Disturbance Torque'] = [T_sol, 'N m']
 
         # Gravity gradient torque
         mu = kwargs.pop('mu', self.M.mu_earth)
         T_gg = DT.gg_torque(orb_radius, moi, theta, mu=mu)
-        results['Gravity Gradient Torque'] = T_gg
+        results['Gravity Gradient Torque'] = [T_gg, 'N m']
 
         # Aerodynamic torque
         SA_aero = veh_props['aero surface area']
@@ -91,7 +91,7 @@ class DesignProcess():
         rho = kwargs.pop('rho', self.rho)
         V = kwargs.pop('V', self.V)
         T_aero, Drag_aero = DT.aero_torque(rho, Cd, SA_aero, V, Cpa, Cg)
-        results['Aerodynamic Disturbance Torque'] = T_aero
+        results['Aerodynamic Disturbance Torque'] = [T_aero, 'N m']
 
 
 
@@ -106,8 +106,6 @@ class DesignProcess():
             if t > maxT[1]:
                 maxT[1] = t
                 maxT[0] = n
-
-        results_df = pd.DataFrame.from_dict(results, orient='index', columns=['Value'])
 
         return tuple(maxT), results, torqs
 
