@@ -1,0 +1,65 @@
+\begin{center}
+ \begin{longtable}[c]{llccc}
+
+ % First we define the main caption of the longtable
+ \caption{Trade-off between Alternating-Current Microgrid (AC) and Direct-Current Microgrid (DC) }
+ % \label{tab:microgridtradeoff}
+ \label{tab:example}\\
+ \toprule
+ \multicolumn{1}{c}{\multirow{2}{*}{\textbf{Category}}} &
+  \multicolumn{1}{c}{\multirow{2}{*}{\textbf{Aspect}}} &
+  \multirow{2}{*}{\textbf{Weight}} &
+  \multicolumn{2}{c}{\textbf{Score}} \\ \cline{4-5}
+ \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & & \textbf{AC} & \textbf{DC} \\ \hline
+ \endfirsthead
+
+ % Then we specify the caption to be shown every time the table starts at a new page
+ \caption[]{\textit{Continued from previous page}}\\
+ \toprule
+ \multicolumn{1}{c}{\multirow{2}{*}{\textbf{Category}}} &
+  \multicolumn{1}{c}{\multirow{2}{*}{\textbf{Aspect}}} &
+  \multirow{2}{*}{\textbf{Weight}} &
+  \multicolumn{2}{c}{\textbf{Score}} \\ \cline{4-5}
+ \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & & \textbf{AC} & \textbf{DC} \\ \hline
+ \endhead
+
+ % Then we specify what should be printed before the table breaks and continues on the next page
+ \bottomrule
+ \multicolumn{5}{r}{\textit{Continued on next page}} \\
+ \endfoot
+
+ % Finally, we simply specify what the last foot should look like
+
+ \endlastfoot
+
+ % Here is the content of the table itself, the page breaks will be generated automatically
+ \textbf{Development cost} & & \textbf{2} & \textbf{5.0} & \textbf{4.8} \\
+  & Research cost & 3 & 5 & 3 \\
+  & Design cost & 1 & 3 & 3 \\
+  & Production cost & 2 & 3 & 5 \\
+  & Verification cost & 3 & 7 & 7 \\
+  & Validation cost & 2 & 5 & 5 \\ \hline
+ \textbf{Effectiveness} & & \textbf{5} & \textbf{3.8} & \textbf{6.5 } \\
+  & Mass & 5 & 3 & 7 \\
+  & Volume & 3 & 3 & 5 \\
+  & Efficiency & 5 & 5 & 7 \\ \hline
+ \textbf{System installation} & Plug \& Play factor & \textbf{4} & \textbf{3.0} & \textbf{5.0} \\ \hline
+ \textbf{System operation} & & \textbf{5} & \textbf{5.5} & \textbf{8.0} \\
+  & Operational risk & 2 & 3 & 5 \\
+  & Operational complexity & 4 & 5 & 7 \\
+  & Controllability & 5 & 7 & 10 \\\hline
+ \textbf{System maintenance} & & \textbf{5} & \textbf{3.8} & \textbf{6.7} \\
+  & Reliability & 5 & 3 & 7 \\
+  & Replacement cost \& effort & 4 & 1 & 3 \\
+  & Ease of problem detection & 4 & 7 & 10 \\
+  & Ease of component inspection & 2 & 5 & 7 \\\hline
+ \textbf{Sustainability} & & \textbf{2} & \textbf{3.0} & \textbf{3.0} \\
+  & Production & 2 & 3 & 3 \\
+  & Retirement & 4 & 3 & 3 \\ \hline
+  &
+  &
+  \textbf{\begin{tabular}[c]{@{}c@{}}Sum of category\\ weights\end{tabular}} &
+  \multicolumn{2}{c}{\textbf{\begin{tabular}[c]{@{}c@{}}Weighted \\ score\end{tabular}}} \\ \cline{3-5}
+  & & \textbf{23} & \textbf{3.7} & \textbf{5.5}
+ \end{longtable}
+\end{center}

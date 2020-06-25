@@ -7,19 +7,25 @@
 % Packages
 \usepackage{amsmath}
 \usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{geometry}
 
 % Document
 \begin{document}
+\newgeometry{a4paper,total={170mm,257mm}, left=20mm, right=20mm, top=20mm, bottom=20mm}
 
-\begin{table}
-    \centering
-    \input{results/tech_results.tex}
-\end{table}
+    \input{longtable_short.tex}
 
-\begin{table}
-    \centering
-    \input{results/hw_results.tex}
-\end{table}
+
+%\begin{table}
+%    \centering
+%    \input{results/tech_results.tex}
+%\end{table}
+%
+%\begin{table}
+%    \centering
+%    \input{results/hw_results.tex}
+%\end{table}
 
 
 \end{document}
