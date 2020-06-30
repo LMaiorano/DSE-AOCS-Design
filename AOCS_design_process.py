@@ -200,8 +200,9 @@ class DesignProcess():
 
 
             tot_T_mag = np.linalg.norm(att_T) + np.linalg.norm(pair_T)
-            if tot_T_mag < min_couple[1]:
-                min_couple = [att, tot_T_mag]
+            effective_T = att_T + pair_T
+            if np.max(np.abs(effective_T)) < min_couple[1]:
+                min_couple = [att, np.max(np.abs(effective_T))]
 
         return min_couple
 
@@ -214,10 +215,12 @@ class DesignProcess():
         for th in [att, pr]:
             # mask arm array to exclude arm to axis parallel with thrust vector
             mask = 1 - np.abs(th.t_vect)
-            masked = np.abs(np.multiply(th.t_arm,  mask))
-            arms.append(masked.max())
+            masked = np.multiply(th.t_arm,  mask)
+            eff_arm = np.cross(masked, th.t_vect)
+            arms.append(eff_arm)
 
-        return sum(arms)
+        tot_arm = max(np.abs(sum(arms)))
+        return tot_arm
 
 
     def thrust_force_disturbances(self, worst_torque, L=None):

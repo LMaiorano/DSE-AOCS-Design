@@ -237,7 +237,7 @@ class Orbiter():
         self.add_subsys_masses(geom['TTC'])
 
         # Add probes
-        # self.add_subsys_masses(geom['Probes']) #########################
+        self.add_subsys_masses(geom['Probes']) #########################
 
         # Add Solar Array
         self.add_subsys_masses(geom['EPS'])
